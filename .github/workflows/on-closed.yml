@@ -8,6 +8,41 @@ jobs:
   track_issue:
     runs-on: ubuntu-22.04
     steps:
+      - name: Get project data
+        env:
+          GITHUB_TOKEN: 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
+          ORGANIZATION: rakshitgondwal
+          PROJECT_NUMBER: 2
+        run: |
+          gh api graphql -f query='
+            query($org: String!, $number: Int!) {
+              organization(login: $org){
+                projectV2(number: $number) {
+                  id
+                  fields(first:20) {
+                    nodes {
+                      ... on ProjectV2Field {
+                        id
+                        name
+                      }
+                      ... on ProjectV2SingleSelectField {
+                        id
+                        name
+                        options {
+                          id
+                          name
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }' -f org=$ORGANIZATION -F number=$PROJECT_NUMBER > project_data.json
+
+          echo 'PROJECT_ID='$(jq '.data.organization.projectV2.id' project_data.json) >> $GITHUB_ENV
+          echo 'DATE_FIELD_ID='$(jq '.data.organization.projectV2.fields.nodes[] | select(.name== "Start Date") | .id' project_data.json) >> $GITHUB_ENV
+
+
       - name: Get date
         run: echo "DATE=$(date +"%Y-%m-%d")" >> $GITHUB_ENV
 
@@ -18,7 +53,6 @@ jobs:
           gh api graphql -f query='
             mutation (
               $project: ID!
-              $item: ID!
               $date_field: ID!
               $date_value: Date!
             ) {
