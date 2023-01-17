@@ -3,7 +3,7 @@ name: Set the End Date in the project
 on:
   issues:
     types:
-      - reopened
+      - closed
 jobs:
   track_issue:
     runs-on: ubuntu-22.04
