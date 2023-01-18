@@ -47,7 +47,7 @@ jobs:
 
       - name: Set fields
         env:
-          GITHUB_TOKEN: ${{ secrets.YOUR_TOKEN }} 
+          GITHUB_TOKEN: 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
         run: |
           gh api graphql -f query='
             mutation (
