@@ -3,7 +3,7 @@ name: Set the End Date in the project
 on:
   issues:
     types:
-      - reopened
+      - 
 jobs:
   track_issue:
     runs-on: ubuntu-22.04
@@ -13,7 +13,7 @@ jobs:
 
       - name: Set fields
         env:
-          GITHUB_TOKEN: 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
+          GITHUB_TOKEN: ${{ secrets.YOUR_TOKEN }} 
         run: |
           gh api graphql -f query='
             mutation (
