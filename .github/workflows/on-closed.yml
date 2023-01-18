@@ -10,7 +10,7 @@ jobs:
     steps:
       - name: Get project data
         env:
-          GITHUB_TOKEN: ${{ secrets.YOUR_TOKEN }} 
+          GITHUB_TOKEN: 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 
           PROJECT_NUMBER: 2
         run: |
           gh api graphql -f query='
