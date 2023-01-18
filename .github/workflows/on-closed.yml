@@ -10,7 +10,7 @@ jobs:
     steps:
       - name: Get project data
         env:
-          GITHUB_TOKEN: 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 
+          GITHUB_TOKEN: ${{ secrets.PRACTICE_TOKEN }} 
           USER: rakshitgondwal
           PROJECT_NUMBER: 2
         run: |
@@ -48,7 +48,7 @@ jobs:
 
       - name: Set fields
         env:
-          GITHUB_TOKEN: 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
+          GITHUB_TOKEN: ${{ secrets.PRACTICE_TOKEN }} 
         run: |
           gh api graphql -f query='
             mutation (
