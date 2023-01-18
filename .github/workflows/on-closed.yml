@@ -11,7 +11,7 @@ jobs:
       - name: Get project data
         env:
           GITHUB_TOKEN: ${{ secrets.YOUR_TOKEN }} 
-          USER: rakshitgondwal
+          ORGANIZATION: rakshitgondwal
           PROJECT_NUMBER: 2
         run: |
           gh api graphql -f query='
