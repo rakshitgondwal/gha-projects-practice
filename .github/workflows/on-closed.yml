@@ -15,7 +15,6 @@ jobs:
       - name: Get project data
         env:
           GITHUB_TOKEN: ${{ secrets.PRACTICE_TOKEN }} 
-          USER: "rakshitgondwal"
           PROJECT_NUMBER: 2
         run: |
           gh api graphql -f query='
@@ -41,7 +40,7 @@ jobs:
                   }
                 }
               }
-            }' -f org=$USER -F number=$PROJECT_NUMBER > project_data.json
+            }' -f org=$OWNER -F number=$PROJECT_NUMBER > project_data.json
 
           echo 'PROJECT_ID='$(jq '.data.organization.projectV2.id' project_data.json) >> $GITHUB_ENV
           echo 'ITEM_ID='$(jq '.data.organization.projectV2.item.id' project_data.json) >> $GITHUB_ENV
