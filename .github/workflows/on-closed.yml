@@ -58,6 +58,7 @@ jobs:
           gh api graphql -f query='
             mutation (
               $project: ID!
+              $item: ID!
               $date_field: ID!
               $date_value: Date!
             ) {
