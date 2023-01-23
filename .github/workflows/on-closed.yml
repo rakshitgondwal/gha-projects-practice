@@ -15,14 +15,16 @@ jobs:
       - name: Get project data
         env:
           GITHUB_TOKEN: ${{ secrets.PRACTICE_TOKEN }} 
-          USER: rakshitgondwal
           PROJECT_NUMBER: 2
         run: |
           gh api graphql -f query='
-            query($user: String!, $number: Int!) {
-              user(login: $user){
+            query($owner: String!, $number: Int!) {
+              repository(owner: $owner){
                 projectV2(number: $number) {
                   id
+                  item {
+                    id
+                  }
                   fields(first:20) {
                     nodes {
                       ... on ProjectV2Field {
@@ -41,11 +43,11 @@ jobs:
                   }
                 }
               }
-            }' -f user=$USER -F number=$PROJECT_NUMBER > project_data.json
+            }' -f owner=$OWNER -F number=$PROJECT_NUMBER > project_data.json
 
           echo 'PROJECT_ID='$(jq '.data.organization.projectV2.id' project_data.json) >> $GITHUB_ENV
           echo 'ITEM_ID='$(jq '.data.organization.projectV2.item.id' project_data.json) >> $GITHUB_ENV
-          echo 'DATE_FIELD_ID='$(jq '.data.organization.projectV2.fields.nodes[] | select(.name== "Start Date") | .id' project_data.json) >> $GITHUB_ENV
+          echo 'DATE_FIELD_ID='$(jq '.data.organization.project
 
 
       - name: Get date
