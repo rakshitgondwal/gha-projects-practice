@@ -51,6 +51,13 @@ jobs:
       - name: Get date
         run: echo "DATE=$(date +"%Y-%m-%d")" >> $GITHUB_ENV
 
+      - name: Get item data
+        env:
+         GITHUB_TOKEN: ${{ secrets.PRACTICE_TOKEN }} 
+        run: |
+          echo 'ITEM_ID='$(jq '.data.organization.projectV2.item.id' project_data.json) >> $GITHUB_ENV
+
+
       - name: Set fields
         env:
           GITHUB_TOKEN: ${{ secrets.PRACTICE_TOKEN }} 
@@ -58,6 +65,7 @@ jobs:
           gh api graphql -f query='
             mutation (
               $project: ID!
+              $item: ID!
               $date_field: ID!
               $date_value: Date!
             ) {
@@ -73,4 +81,4 @@ jobs:
                   id
                 }
               }
-            }' -f project=$PROJECT_ID -f item=$ITEM_ID -f status_field=$STATUS_FIELD_ID -f status_value=${{ env.TODO_OPTION_ID }} -f date_field=$DATE_FIELD_ID -f date_value=$DATE --silent
+            }' -f project=$PROJECT_ID -f item=$ITEM_ID -f date_field=$DATE_FIELD_ID -f date_value=$DATE --silent
