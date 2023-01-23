@@ -1,26 +1,75 @@
-name: Set End Date on Closed Issues
+name: Set the End Date in the project
 
 on:
   issues:
-    types: [closed, reopened]
+    types:
+      - closed
 
+permissions:
+  repository-projects: write
+  
 jobs:
-  set_end_date:
-    runs-on: ubuntu-latest
+  track_issue:
+    runs-on: ubuntu-22.04
     steps:
-    - name: Check if issue is closed
-      if: github.event.action == 'closed'
-      run: |
-        curl -X PATCH \
-        -H "Accept: application/vnd.github+json" \
-        -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-        -d '{"end_date": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"}' \
-        https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}
-    - name: Check if issue is reopened
-      if: github.event.action == 'reopened'
-      run: |
-        curl -X PATCH \
-        -H "Accept: application/vnd.github+json" \
-        -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-        -d '{"end_date": null}' \
-        https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}
+      - name: Get project data
+        env:
+          GITHUB_TOKEN: ${{ secrets.PRACTICE_TOKEN }} 
+          USER: "rakshitgondwal"
+          PROJECT_NUMBER: 2
+        run: |
+          gh api graphql -f query='
+            query($org: String!, $number: Int!) {
+              organization(login: $org){
+                projectV2(number: $number) {
+                  id
+                  fields(first:20) {
+                    nodes {
+                      ... on ProjectV2Field {
+                        id
+                        name
+                      }
+                      ... on ProjectV2SingleSelectField {
+                        id
+                        name
+                        options {
+                          id
+                          name
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }' -f org=$ORGANIZATION -F number=$PROJECT_NUMBER > project_data.json
+
+          echo 'PROJECT_ID='$(jq '.data.organization.projectV2.id' project_data.json) >> $GITHUB_ENV
+          echo 'DATE_FIELD_ID='$(jq '.data.organization.projectV2.fields.nodes[] | select(.name== "Start Date") | .id' project_data.json) >> $GITHUB_ENV
+
+
+      - name: Get date
+        run: echo "DATE=$(date +"%Y-%m-%d")" >> $GITHUB_ENV
+
+      - name: Set fields
+        env:
+          GITHUB_TOKEN: ${{ secrets.PRACTICE_TOKEN }} 
+        run: |
+          gh api graphql -f query='
+            mutation (
+              $project: ID!
+              $date_field: ID!
+              $date_value: Date!
+            ) {
+              set_end_date: updateProjectV2ItemFieldValue(input: {
+                projectId: $project
+                itemId: $item
+                fieldId: $date_field
+                value: { 
+                  date: $date_value
+                }
+              }) {
+                projectV2Item {
+                  id
+                }
+              }
+            }' -f project=$PROJECT_ID -f item=$ITEM_ID -f status_field=$STATUS_FIELD_ID -f status_value=${{ env.TODO_OPTION_ID }} -f date_field=$DATE_FIELD_ID -f date_value=$DATE --silent
