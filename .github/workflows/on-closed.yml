@@ -15,19 +15,14 @@ jobs:
       - name: Get project data
         env:
           GITHUB_TOKEN: ${{ secrets.PRACTICE_TOKEN }} 
+          USER: rakshitgondwal
           PROJECT_NUMBER: 2
-          REPOSITORY_NAME: "gha-projects-practice"
         run: |
           gh api graphql -f query='
-            query($owner: String!, $name: String!, $number: Int!) {
-              repository(owner: $owner, name: $name){
+            query($user: String!, $number: Int!) {
+              user(login: $user){
                 projectV2(number: $number) {
                   id
-                  cards(first:1) {
-                    nodes {
-                      id
-                    }
-                  }
                   fields(first:20) {
                     nodes {
                       ... on ProjectV2Field {
@@ -46,10 +41,10 @@ jobs:
                   }
                 }
               }
-            }' -f owner=$OWNER -f name=$REPOSITORY_NAME -F number=$PROJECT_NUMBER > project_data.json
+            }' -f user=$USER -F number=$PROJECT_NUMBER > project_data.json
 
           echo 'PROJECT_ID='$(jq '.data.organization.projectV2.id' project_data.json) >> $GITHUB_ENV
-          echo 'ITEM_ID='$(jq '.data.organization.projectV2.cards.nodes[0].id' project_data.json) >> $GITHUB_ENV
+          echo 'ITEM_ID='$(jq '.data.organization.projectV2.item.id' project_data.json) >> $GITHUB_ENV
           echo 'DATE_FIELD_ID='$(jq '.data.organization.projectV2.fields.nodes[] | select(.name== "Start Date") | .id' project_data.json) >> $GITHUB_ENV
 
 
@@ -63,7 +58,6 @@ jobs:
           gh api graphql -f query='
             mutation (
               $project: ID!
-              $item: ID!
               $date_field: ID!
               $date_value: Date!
             ) {
