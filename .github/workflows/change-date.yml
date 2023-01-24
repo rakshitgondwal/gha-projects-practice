@@ -1,0 +1,113 @@
+name: Set the End Date in the project
+
+on:
+  issues:
+    types: [closed, reopened]
+jobs:
+  track_issue:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Get project data
+        env:
+          GITHUB_TOKEN: ${{ secrets.PRACTICE_TOKEN }} 
+          ORGANIZATION: forpractice-org
+          PROJECT_NUMBER: 1
+        run: |
+          gh api graphql -f query='
+            query($org: String!, $number: Int!) {
+              organization(login: $org){
+                projectV2(number: $number) {
+                  id
+                  fields(first:20) {
+                    nodes {
+                      ... on ProjectV2Field {
+                        id
+                        name
+                      }
+                      ... on ProjectV2SingleSelectField {
+                        id
+                        name
+                        options {
+                          id
+                          name
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }' -f org=$ORGANIZATION -F number=$PROJECT_NUMBER > project_data.json
+          echo 'PROJECT_ID='$(jq '.data.organization.projectV2.id' project_data.json) >> $GITHUB_ENV
+          echo 'DATE_FIELD_ID='$(jq '.data.organization.projectV2.fields.nodes[] | select(.name== "End Date") | .id' project_data.json) >> $GITHUB_ENV
+      
+      - name: Get date
+        run: echo "DATE=$(date +"%Y-%m-%d")" >> $GITHUB_ENV
+        
+      - name: Get item data
+        id: get-project-item-id
+        uses: monry/actions-get-project-item-id@v2
+        with:
+          github-token: ${{ secrets.PRACTICE_TOKEN }}
+          project-id: $PROJECT_ID
+          issue-id: ${{ github.event.issue.node_id }}
+
+      - name: Echo item id
+        run: echo 'ITEM_ID='${{ steps.get-project-item-id.outputs.project-item-id }} >> $GITHUB_ENV
+          
+      - name: Echo variable value
+        run: echo 'Value of project id:' $PROJECT_ID
+             echo 'Value of date field id:' $DATE_FIELD_ID
+             echo 'Value of item id:' $ITEM_ID
+             echo 'Value of date:' $DATE
+             
+      
+      - name: Check if issue is closed
+        if: github.event.action == 'closed'
+        env:
+          GITHUB_TOKEN: ${{ secrets.PRACTICE_TOKEN }} 
+        run: |
+          gh api graphql -f query='
+            mutation (
+              $project: ID!
+              $item: ID!
+              $date_field: ID!
+              $date_value: Date!
+            ) {
+              set_end_date: updateProjectV2ItemFieldValue(input: {
+                projectId: $project
+                itemId: $item
+                fieldId: $date_field
+                value: { 
+                  date: $date_value
+                }
+              }) {
+                projectV2Item {
+                  id
+                }
+              }
+            }' -f project=$PROJECT_ID -f item=$ITEM_ID -f date_field=$DATE_FIELD_ID -f date_value=$DATE --silent
+            
+      - name: Check if issue is reopened
+        if: github.event.action == 'reopened'
+        env:
+          GITHUB_TOKEN: ${{ secrets.PRACTICE_TOKEN }} 
+        run: |
+          gh api graphql -f query='
+            mutation (
+              $project: ID!
+              $item: ID!
+              $date_field: ID!
+            ) {
+              set_end_date: updateProjectV2ItemFieldValue(input: {
+                projectId: $project
+                itemId: $item
+                fieldId: $date_field
+                value: { 
+                  date: null
+                }
+              }) {
+                projectV2Item {
+                  id
+                }
+              }
+            }' -f project=$PROJECT_ID -f item=$ITEM_ID -f date_field=$DATE_FIELD_ID --silent   
