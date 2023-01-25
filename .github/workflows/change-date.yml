@@ -43,16 +43,22 @@ jobs:
       - name: Get date
         run: echo "DATE=$(date +"%Y-%m-%d")" >> $GITHUB_ENV
         
-      - name: Get item data
-        id: get-project-item-id
-        uses: monry/actions-get-project-item-id@v2
-        with:
-          github-token: ${{ secrets.PRACTICE_TOKEN }}
-          project-id: $PROJECT_ID
-          issue-id: ${{ github.event.issue.node_id }}
+      - name: Add item id
+        env:
+          GITHUB_TOKEN: ${{ secrets.PRACTICE_TOKEN }}
+          ISSUE_ID: ${{ github.event.issue.node_id }}
+        run: |
+          item_id="$( gh api graphql -f query='
+            mutation($project:ID!, $issue:ID!) {
+              addProjectV2ItemById(input: {projectId: $project, contentId: $issue}) {
+                item {
+                  id
+                }
+              }
+            }' -f project=$PROJECT_ID -f issue=$ISSUE_ID --jq '.data.addProjectV2ItemById.item.id')"
 
-      - name: Echo item id
-        run: echo 'ITEM_ID='${{ steps.get-project-item-id.outputs.project-item-id }} >> $GITHUB_ENV
+          echo 'ITEM_ID='$item_id >> $GITHUB_ENV
+
           
       - name: Echo variable value
         run: echo 'Value of project id:' $PROJECT_ID
