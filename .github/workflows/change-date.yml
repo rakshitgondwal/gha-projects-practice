@@ -56,9 +56,7 @@ jobs:
                 }
               }
             }' -f project=$PROJECT_ID -f issue=$ISSUE_ID --jq '.data.addProjectV2ItemById.item.id')"
-
           echo 'ITEM_ID='$item_id >> $GITHUB_ENV
-
           
       - name: Echo variable value
         run: echo 'Value of project id:' $PROJECT_ID
@@ -70,7 +68,7 @@ jobs:
       - name: Check if issue is closed
         if: github.event.action == 'closed'
         env:
-          GITHUB_TOKEN: ${{ secrets.PRACTICE_TOKEN }} 
+         GITHUB_TOKEN: ${{ secrets.PRACTICE_TOKEN }} 
         run: |
           gh api graphql -f query='
             mutation (
@@ -91,7 +89,7 @@ jobs:
                   id
                 }
               }
-            }' -f project=$PROJECT_ID -f item=$ITEM_ID -f date_field=$DATE_FIELD_ID -f date_value=$DATE --silent
+            }' -f project=$PROJECT_ID -f item=$ITEM_ID -f date_field=$DATE_FIELD_ID -f date_value=$DATE --silen
             
       - name: Check if issue is reopened
         if: github.event.action == 'reopened'
@@ -116,4 +114,4 @@ jobs:
                   id
                 }
               }
-            }' -f project=$PROJECT_ID -f item=$ITEM_ID -f date_field=$DATE_FIELD_ID --silent   
+            }' -f project=$PROJECT_ID -f item=$ITEM_ID -f date_field=$DATE_FIELD_ID --silent  
