@@ -18,3 +18,5 @@ jobs:
     
     - name: Install Helm
       uses: Azure/setup-helm@v3 
+      with:
+        token: ${{ secrets.PRACTICE_TOKEN }}
