@@ -1,0 +1,20 @@
+name: Check Helm Generation
+
+on:
+  push:
+      branches:
+        - 'main'
+  pull_request:
+    branches:
+      - 'main'
+
+jobs:
+  helm-generation-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Install Helm
+      uses: Azure/setup-helm@v3 
